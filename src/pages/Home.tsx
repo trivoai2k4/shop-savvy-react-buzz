@@ -1,14 +1,17 @@
 
 import { Link } from 'react-router-dom';
 import { ArrowRight, Star, Shield, Truck } from 'lucide-react';
-import { useAppSelector, useAppDispatch } from '../hooks/redux';
+import { useAppDispatch } from '../hooks/redux';
 import { addToCart } from '../store/cartSlice';
+import { useProducts } from '../hooks/useProducts';
 
 const Home = () => {
   const dispatch = useAppDispatch();
-  const featuredProducts = useAppSelector(state => 
-    state.products.products.filter(product => product.featured)
-  );
+  
+  // Fetch featured products
+  const { data, isLoading } = useProducts({ limit: 100 }); // Get all products to filter featured ones
+  
+  const featuredProducts = data?.products.filter(product => product.featured) || [];
 
   const handleAddToCart = (product: any) => {
     dispatch(addToCart({
@@ -83,39 +86,46 @@ const Home = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredProducts.map((product) => (
-              <div
-                key={product.id}
-                className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-105"
-              >
-                <div className="aspect-w-1 aspect-h-1">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-64 object-cover"
-                  />
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    {product.name}
-                  </h3>
-                  <p className="text-gray-600 mb-4">{product.description}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-blue-600">
-                      ${product.price}
-                    </span>
-                    <button
-                      onClick={() => handleAddToCart(product)}
-                      className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-semibold"
-                    >
-                      Add to Cart
-                    </button>
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-2 text-gray-600">Loading featured products...</span>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {featuredProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-105"
+                >
+                  <div className="aspect-w-1 aspect-h-1">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-64 object-cover"
+                    />
+                  </div>
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                      {product.name}
+                    </h3>
+                    <p className="text-gray-600 mb-4">{product.description}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl font-bold text-blue-600">
+                        ${product.price}
+                      </span>
+                      <button
+                        onClick={() => handleAddToCart(product)}
+                        className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-semibold"
+                      >
+                        Add to Cart
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           <div className="text-center mt-12">
             <Link
