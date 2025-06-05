@@ -2,7 +2,12 @@
 import { Middleware } from '@reduxjs/toolkit';
 import { setLoading, setError } from '../store/productsSlice';
 
-export const apiMiddleware: Middleware = (store) => (next) => (action) => {
+interface ActionWithType {
+  type: string;
+  payload?: any;
+}
+
+export const apiMiddleware: Middleware = (store) => (next) => (action: ActionWithType) => {
   // Log all actions in development
   if (process.env.NODE_ENV === 'development') {
     console.log('Action dispatched:', action);
