@@ -33,6 +33,13 @@ interface RawProduct {
   images: string[];
 }
 
+// Interface for category API response
+interface CategoryResponse {
+  slug: string;
+  name: string;
+  url: string;
+}
+
 export interface ProductsResponse {
   products: RawProduct[];
   total: number;
@@ -113,8 +120,11 @@ export const fetchCategories = async (): Promise<string[]> => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
-    const categories: string[] = await response.json();
-    return ['All', ...categories];
+    const categories: CategoryResponse[] = await response.json();
+    
+    // Transform category objects to extract just the names and add 'All' option
+    const categoryNames = categories.map(cat => cat.name);
+    return ['All', ...categoryNames];
   } catch (error) {
     console.error('Error fetching categories:', error);
     return ['All', 'Electronics', 'Accessories']; // Fallback categories
