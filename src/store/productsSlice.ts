@@ -4,18 +4,19 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 export interface Product {
   id: number;
   title: string;
-  name?: string; // For compatibility
   description: string;
   price: number;
-  discountPercentage?: number;
-  rating?: number;
-  stock?: number;
-  brand?: string;
+  discountPercentage: number;
+  rating: number;
+  stock: number;
+  brand: string;
   category: string;
   thumbnail: string;
-  image?: string; // For compatibility
-  images?: string[];
-  featured?: boolean;
+  images: string[];
+  // Compatibility fields added by transformation
+  name: string;
+  image: string;
+  featured: boolean;
 }
 
 interface ProductsState {

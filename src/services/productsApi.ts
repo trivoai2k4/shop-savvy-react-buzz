@@ -1,6 +1,25 @@
 
-// Updated Product interface to match DummyJSON API structure
+// Product interface matching the transformed data structure
 export interface Product {
+  id: number;
+  title: string;
+  description: string;
+  price: number;
+  discountPercentage: number;
+  rating: number;
+  stock: number;
+  brand: string;
+  category: string;
+  thumbnail: string;
+  images: string[];
+  // Transformed/compatibility fields
+  name: string;
+  image: string;
+  featured: boolean;
+}
+
+// Raw API response interface
+interface RawProduct {
   id: number;
   title: string;
   description: string;
@@ -15,7 +34,7 @@ export interface Product {
 }
 
 export interface ProductsResponse {
-  products: Product[];
+  products: RawProduct[];
   total: number;
   skip: number;
   limit: number;
@@ -63,8 +82,8 @@ export const fetchProducts = async (params: ProductsQueryParams = {}): Promise<{
     
     const data: ProductsResponse = await response.json();
     
-    // Transform the data to match our expected format
-    const transformedProducts = data.products.map(product => ({
+    // Transform the raw API data to include compatibility fields
+    const transformedProducts: Product[] = data.products.map(product => ({
       ...product,
       name: product.title, // Map title to name for compatibility
       image: product.thumbnail, // Use thumbnail as primary image
