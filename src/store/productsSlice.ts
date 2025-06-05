@@ -1,3 +1,4 @@
+
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { fetchProducts as fetchProductsApi, fetchCategories as fetchCategoriesApi, ProductsQueryParams } from '../services/productsApi';
 
@@ -49,10 +50,20 @@ const generateCacheKey = (params: ProductsQueryParams): string => {
   return JSON.stringify(params);
 };
 
+// Define consistent return type for fetchProducts
+interface FetchProductsResult {
+  products: Product[];
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  fromCache: boolean;
+  cacheKey: string;
+}
+
 // Async thunk for fetching products with caching logic
 export const fetchProducts = createAsyncThunk(
   'products/fetchProducts',
-  async (params: ProductsQueryParams = {}, { getState }) => {
+  async (params: ProductsQueryParams = {}, { getState }): Promise<FetchProductsResult> => {
     const state = getState() as { products: ProductsState };
     const cacheKey = generateCacheKey(params);
     const now = Date.now();
@@ -65,19 +76,23 @@ export const fetchProducts = createAsyncThunk(
       now - state.products.lastFetch < cacheTime &&
       state.products.items.length > 0
     ) {
-      // Return cached data
+      // Return cached data with consistent structure
       return {
         products: state.products.items,
         totalCount: state.products.totalCount,
         totalPages: state.products.totalPages,
         currentPage: state.products.currentPage,
         fromCache: true,
+        cacheKey,
       };
     }
     
     const response = await fetchProductsApi(params);
     return {
-      ...response,
+      products: response.products,
+      totalCount: response.totalCount,
+      totalPages: response.totalPages,
+      currentPage: response.currentPage,
       fromCache: false,
       cacheKey,
     };
@@ -152,7 +167,7 @@ const productsSlice = createSlice({
           state.totalPages = action.payload.totalPages;
           state.totalCount = action.payload.totalCount;
           state.lastFetch = Date.now();
-          state.cacheKey = action.payload.cacheKey || null;
+          state.cacheKey = action.payload.cacheKey;
         }
       })
       .addCase(fetchProducts.rejected, (state, action) => {
