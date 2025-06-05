@@ -1,4 +1,3 @@
-
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { fetchProducts as fetchProductsApi, fetchCategories as fetchCategoriesApi, ProductsQueryParams } from '../services/productsApi';
 
@@ -28,6 +27,9 @@ interface ProductsState {
   currentPage: number;
   totalPages: number;
   totalCount: number;
+  // Add caching metadata for performance
+  lastFetch: number | null;
+  cacheKey: string | null;
 }
 
 const initialState: ProductsState = {
@@ -38,21 +40,61 @@ const initialState: ProductsState = {
   currentPage: 1,
   totalPages: 1,
   totalCount: 0,
+  lastFetch: null,
+  cacheKey: null,
 };
 
-// Async thunk for fetching products
+// Helper to generate cache key
+const generateCacheKey = (params: ProductsQueryParams): string => {
+  return JSON.stringify(params);
+};
+
+// Async thunk for fetching products with caching logic
 export const fetchProducts = createAsyncThunk(
   'products/fetchProducts',
-  async (params: ProductsQueryParams = {}) => {
+  async (params: ProductsQueryParams = {}, { getState }) => {
+    const state = getState() as { products: ProductsState };
+    const cacheKey = generateCacheKey(params);
+    const now = Date.now();
+    const cacheTime = 5 * 60 * 1000; // 5 minutes cache
+    
+    // Check if we have cached data that's still valid
+    if (
+      state.products.lastFetch &&
+      state.products.cacheKey === cacheKey &&
+      now - state.products.lastFetch < cacheTime &&
+      state.products.items.length > 0
+    ) {
+      // Return cached data
+      return {
+        products: state.products.items,
+        totalCount: state.products.totalCount,
+        totalPages: state.products.totalPages,
+        currentPage: state.products.currentPage,
+        fromCache: true,
+      };
+    }
+    
     const response = await fetchProductsApi(params);
-    return response;
+    return {
+      ...response,
+      fromCache: false,
+      cacheKey,
+    };
   }
 );
 
-// Async thunk for fetching categories
+// Async thunk for fetching categories with caching
 export const fetchCategories = createAsyncThunk(
   'products/fetchCategories',
-  async () => {
+  async (_, { getState }) => {
+    const state = getState() as { products: ProductsState };
+    
+    // Only fetch if we don't have categories or just have 'All'
+    if (state.products.categories.length > 1) {
+      return state.products.categories;
+    }
+    
     const categories = await fetchCategoriesApi();
     return categories;
   }
@@ -82,6 +124,16 @@ const productsSlice = createSlice({
       state.error = action.payload;
       state.loading = false;
     },
+    clearCache: (state) => {
+      state.lastFetch = null;
+      state.cacheKey = null;
+    },
+    updateProduct: (state, action: PayloadAction<Partial<Product> & { id: number }>) => {
+      const index = state.items.findIndex(item => item.id === action.payload.id);
+      if (index !== -1) {
+        state.items[index] = { ...state.items[index], ...action.payload };
+      }
+    },
   },
   extraReducers: (builder) => {
     // Handle fetchProducts async thunk
@@ -92,11 +144,16 @@ const productsSlice = createSlice({
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload.products;
-        state.currentPage = action.payload.currentPage;
-        state.totalPages = action.payload.totalPages;
-        state.totalCount = action.payload.totalCount;
         state.error = null;
+        
+        if (!action.payload.fromCache) {
+          state.items = action.payload.products;
+          state.currentPage = action.payload.currentPage;
+          state.totalPages = action.payload.totalPages;
+          state.totalCount = action.payload.totalCount;
+          state.lastFetch = Date.now();
+          state.cacheKey = action.payload.cacheKey || null;
+        }
       })
       .addCase(fetchProducts.rejected, (state, action) => {
         state.loading = false;
@@ -104,7 +161,10 @@ const productsSlice = createSlice({
       })
       // Handle fetchCategories async thunk
       .addCase(fetchCategories.pending, (state) => {
-        state.loading = true;
+        // Don't set loading for categories if we already have some
+        if (state.categories.length <= 1) {
+          state.loading = true;
+        }
         state.error = null;
       })
       .addCase(fetchCategories.fulfilled, (state, action) => {
@@ -119,5 +179,5 @@ const productsSlice = createSlice({
   },
 });
 
-export const { setProducts, setLoading, setError } = productsSlice.actions;
+export const { setProducts, setLoading, setError, clearCache, updateProduct } = productsSlice.actions;
 export default productsSlice.reducer;
