@@ -1,6 +1,5 @@
 
 import { Middleware } from '@reduxjs/toolkit';
-import { setLoading, setError } from '../store/productsSlice';
 
 interface ActionWithType {
   type: string;
@@ -13,17 +12,14 @@ export const apiMiddleware: Middleware = (store) => (next) => (action: ActionWit
     console.log('Action dispatched:', action);
   }
 
-  // Handle async actions with loading states
-  if (action.type?.endsWith('/pending')) {
-    store.dispatch(setLoading(true));
-  } else if (action.type?.endsWith('/fulfilled') || action.type?.endsWith('/rejected')) {
-    store.dispatch(setLoading(false));
-  }
-
-  // Handle error actions
-  if (action.type?.endsWith('/rejected')) {
-    const errorMessage = action.payload?.message || 'An error occurred';
-    store.dispatch(setError(errorMessage));
+  // createAsyncThunk actions already handle loading states automatically
+  // We just need to log them for debugging purposes
+  if (action.type?.includes('/pending')) {
+    console.log('🔄 Loading started for:', action.type);
+  } else if (action.type?.includes('/fulfilled')) {
+    console.log('✅ Action fulfilled:', action.type);
+  } else if (action.type?.includes('/rejected')) {
+    console.log('❌ Action failed:', action.type, action.payload);
   }
 
   return next(action);
