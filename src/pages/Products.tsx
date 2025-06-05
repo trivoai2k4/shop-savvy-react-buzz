@@ -1,9 +1,10 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Loader2 } from 'lucide-react';
 import { useAppDispatch } from '../hooks/redux';
 import { addToCart } from '../store/cartSlice';
 import { useProducts } from '../hooks/useProducts';
+import { fetchCategories } from '../services/productsApi';
 import { 
   Pagination, 
   PaginationContent, 
@@ -19,6 +20,7 @@ const Products = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
+  const [categories, setCategories] = useState(['All']);
   const limit = 6;
 
   const { data, isLoading, error } = useProducts({
@@ -28,25 +30,37 @@ const Products = () => {
     category: selectedCategory,
   });
 
-  const categories = ['All', 'Electronics', 'Accessories'];
+  // Fetch categories on component mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const categoryList = await fetchCategories();
+        setCategories(categoryList);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      }
+    };
+    
+    loadCategories();
+  }, []);
 
   const handleAddToCart = (product: any) => {
     dispatch(addToCart({
       id: product.id,
-      name: product.name,
+      name: product.name || product.title,
       price: product.price,
-      image: product.image,
+      image: product.image || product.thumbnail,
     }));
   };
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   };
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
-    setCurrentPage(1); // Reset to first page when changing category
+    setCurrentPage(1);
   };
 
   const renderPaginationItems = () => {
@@ -55,7 +69,6 @@ const Products = () => {
     const { totalPages, currentPage: current } = data;
     const items = [];
 
-    // Previous button
     if (current > 1) {
       items.push(
         <PaginationItem key="prev">
@@ -67,7 +80,6 @@ const Products = () => {
       );
     }
 
-    // Page numbers
     for (let i = 1; i <= totalPages; i++) {
       if (i === 1 || i === totalPages || (i >= current - 1 && i <= current + 1)) {
         items.push(
@@ -90,7 +102,6 @@ const Products = () => {
       }
     }
 
-    // Next button
     if (current < totalPages) {
       items.push(
         <PaginationItem key="next">
@@ -110,7 +121,14 @@ const Products = () => {
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center py-12">
-            <p className="text-xl text-red-500">Error loading products. Please try again.</p>
+            <p className="text-xl text-red-500 mb-4">Error loading products</p>
+            <p className="text-gray-600">{error.message}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Try Again
+            </button>
           </div>
         </div>
       </div>
@@ -138,12 +156,12 @@ const Products = () => {
               />
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {categories.map((category) => (
                 <button
                   key={category}
                   onClick={() => handleCategoryChange(category)}
-                  className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
+                  className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 capitalize ${
                     selectedCategory === category
                       ? 'bg-blue-600 text-white'
                       : 'bg-white text-gray-700 hover:bg-gray-100'
@@ -186,14 +204,18 @@ const Products = () => {
                 >
                   <div className="aspect-w-1 aspect-h-1">
                     <img
-                      src={product.image}
-                      alt={product.name}
+                      src={product.image || product.thumbnail}
+                      alt={product.name || product.title}
                       className="w-full h-64 object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+                      }}
                     />
                   </div>
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                      <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full capitalize">
                         {product.category}
                       </span>
                       {product.featured && (
@@ -201,15 +223,28 @@ const Products = () => {
                           Featured
                         </span>
                       )}
+                      {product.rating && (
+                        <div className="flex items-center">
+                          <span className="text-yellow-500 text-sm">★</span>
+                          <span className="text-sm text-gray-600 ml-1">{product.rating.toFixed(1)}</span>
+                        </div>
+                      )}
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      {product.name}
+                      {product.name || product.title}
                     </h3>
-                    <p className="text-gray-600 mb-4">{product.description}</p>
+                    <p className="text-gray-600 mb-4 line-clamp-2">{product.description}</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-blue-600">
-                        ${product.price}
-                      </span>
+                      <div className="flex flex-col">
+                        <span className="text-2xl font-bold text-blue-600">
+                          ${product.price.toFixed(2)}
+                        </span>
+                        {product.discountPercentage > 0 && (
+                          <span className="text-sm text-green-600">
+                            {product.discountPercentage.toFixed(0)}% off
+                          </span>
+                        )}
+                      </div>
                       <button
                         onClick={() => handleAddToCart(product)}
                         className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-semibold"
@@ -217,6 +252,11 @@ const Products = () => {
                         Add to Cart
                       </button>
                     </div>
+                    {product.stock && (
+                      <p className="text-sm text-gray-500 mt-2">
+                        {product.stock} in stock
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}
@@ -237,6 +277,16 @@ const Products = () => {
         {data && data.products.length === 0 && !isLoading && (
           <div className="text-center py-12">
             <p className="text-xl text-gray-500">No products found matching your criteria.</p>
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setSelectedCategory('All');
+                setCurrentPage(1);
+              }}
+              className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Clear Filters
+            </button>
           </div>
         )}
       </div>
