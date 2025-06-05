@@ -1,4 +1,3 @@
-
 // Product interface matching the transformed data structure
 export interface Product {
   id: number;
@@ -54,6 +53,8 @@ export interface ProductsQueryParams {
   category?: string;
 }
 
+import RequestMiddleware from '../middleware/requestMiddleware';
+
 const API_BASE_URL = 'https://dummyjson.com/products';
 
 export const fetchProducts = async (params: ProductsQueryParams = {}): Promise<{
@@ -78,14 +79,12 @@ export const fetchProducts = async (params: ProductsQueryParams = {}): Promise<{
     url = `${API_BASE_URL}?limit=${limit}&skip=${skip}`;
   }
   
-  console.log('Fetching products from:', url);
-  
   try {
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    const response = await RequestMiddleware.execute({ 
+      url,
+      timeout: 15000,
+      retries: 2
+    });
     
     const data: ProductsResponse = await response.json();
     
@@ -114,11 +113,11 @@ export const fetchProducts = async (params: ProductsQueryParams = {}): Promise<{
 // Fetch available categories from the API
 export const fetchCategories = async (): Promise<string[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/categories`);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    const response = await RequestMiddleware.execute({ 
+      url: `${API_BASE_URL}/categories`,
+      timeout: 10000,
+      retries: 2
+    });
     
     const categories: CategoryResponse[] = await response.json();
     
