@@ -15,7 +15,7 @@ const News = () => {
   const { data: postsData, isLoading: postsLoading, error: postsError } = usePosts({
     limit: postsPerPage,
     skip: (currentPage - 1) * postsPerPage,
-    tag: selectedTag,
+    tag: selectedTag === 'All' ? undefined : selectedTag,
   });
 
   const { data: tags = [], isLoading: tagsLoading } = usePostTags();
@@ -171,6 +171,15 @@ const News = () => {
               ))
             )}
           </div>
+          
+          {/* Show current filter */}
+          {selectedTag !== 'All' && (
+            <div className="mb-4">
+              <p className="text-sm text-muted-foreground">
+                Showing posts tagged with: <span className="font-medium text-primary">{selectedTag}</span>
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Posts Grid */}
@@ -277,6 +286,13 @@ const News = () => {
         {postsData?.posts.length === 0 && (
           <div className="text-center py-12">
             <p className="text-xl text-muted-foreground">No articles found for the selected tag.</p>
+            <Button
+              variant="outline"
+              onClick={() => handleTagChange('All')}
+              className="mt-4"
+            >
+              Show All Posts
+            </Button>
           </div>
         )}
       </div>
