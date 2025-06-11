@@ -20,7 +20,8 @@ const News = () => {
 
   const { data: tags = [], isLoading: tagsLoading } = usePostTags();
 
-  const allTags = ['All', ...tags.slice(0, 10)]; // Limit to 10 tags for UI
+  // Ensure tags are always strings
+  const allTags = ['All', ...tags.slice(0, 10).map(tag => typeof tag === 'string' ? tag : String(tag))];
 
   const totalPages = postsData ? Math.ceil(postsData.total / postsPerPage) : 1;
 
@@ -122,10 +123,10 @@ const News = () => {
               </h1>
               
               <div className="flex flex-wrap gap-2 mb-6">
-                {selectedPost.tags.map((tag) => (
-                  <span key={tag} className="flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
+                {selectedPost.tags.map((tag, index) => (
+                  <span key={index} className="flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
                     <Tag size={12} />
-                    {tag}
+                    {String(tag)}
                   </span>
                 ))}
               </div>
@@ -165,7 +166,7 @@ const News = () => {
                   size="sm"
                   className="capitalize"
                 >
-                  {tag}
+                  {String(tag)}
                 </Button>
               ))
             )}
@@ -189,9 +190,9 @@ const News = () => {
               </div>
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2 mb-2">
-                  {post.tags.slice(0, 2).map((tag) => (
-                    <span key={tag} className="px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full capitalize">
-                      {tag}
+                  {post.tags.slice(0, 2).map((tag, index) => (
+                    <span key={index} className="px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full capitalize">
+                      {String(tag)}
                     </span>
                   ))}
                   <span className="text-xs text-muted-foreground ml-auto">
