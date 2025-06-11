@@ -17,10 +17,12 @@ const News = () => {
     tag: selectedTag === 'All' ? undefined : selectedTag,
   });
 
-  const { data: tags = [], isLoading: tagsLoading } = usePostTags();
+  const { data: tagsData = [], isLoading: tagsLoading } = usePostTags();
 
-  // Process tags - the API returns strings, so we just need to ensure they're strings
-  const processedTags = tags.slice(0, 10).map(tag => String(tag));
+  // Ensure tags are properly typed as strings
+  const processedTags = Array.isArray(tagsData) 
+    ? tagsData.slice(0, 10).map((tag: any) => String(tag))
+    : [];
   const allTags = ['All', ...processedTags];
 
   const totalPages = postsData ? Math.ceil(postsData.total / postsPerPage) : 1;
