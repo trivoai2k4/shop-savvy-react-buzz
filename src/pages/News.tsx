@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Calendar, User, ArrowRight, Eye, Heart, Tag } from 'lucide-react';
 import { usePosts, usePostTags } from '../hooks/usePosts';
@@ -20,18 +19,8 @@ const News = () => {
 
   const { data: tags = [], isLoading: tagsLoading } = usePostTags();
 
-  // Process tags to ensure they are strings and handle object format
-  const processedTags = tags.slice(0, 10).map(tag => {
-    if (typeof tag === 'string') {
-      return tag;
-    }
-    // If tag is an object, try to extract the name or slug property
-    if (typeof tag === 'object' && tag !== null) {
-      return tag.name || tag.slug || tag.label || String(tag);
-    }
-    return String(tag);
-  });
-
+  // Process tags - the API returns strings, so we just need to ensure they're strings
+  const processedTags = tags.slice(0, 10).map(tag => String(tag));
   const allTags = ['All', ...processedTags];
 
   const totalPages = postsData ? Math.ceil(postsData.total / postsPerPage) : 1;
