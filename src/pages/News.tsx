@@ -20,8 +20,19 @@ const News = () => {
 
   const { data: tags = [], isLoading: tagsLoading } = usePostTags();
 
-  // Ensure tags are always strings
-  const allTags = ['All', ...tags.slice(0, 10).map(tag => typeof tag === 'string' ? tag : String(tag))];
+  // Process tags to ensure they are strings and handle object format
+  const processedTags = tags.slice(0, 10).map(tag => {
+    if (typeof tag === 'string') {
+      return tag;
+    }
+    // If tag is an object, try to extract the name or slug property
+    if (typeof tag === 'object' && tag !== null) {
+      return tag.name || tag.slug || tag.label || String(tag);
+    }
+    return String(tag);
+  });
+
+  const allTags = ['All', ...processedTags];
 
   const totalPages = postsData ? Math.ceil(postsData.total / postsPerPage) : 1;
 
@@ -166,7 +177,7 @@ const News = () => {
                   size="sm"
                   className="capitalize"
                 >
-                  {String(tag)}
+                  {tag}
                 </Button>
               ))
             )}
