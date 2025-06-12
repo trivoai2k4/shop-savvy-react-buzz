@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { usePosts, usePostTags } from '../hooks/usePosts';
 import { Post } from '../services/postsApi';
@@ -24,11 +23,15 @@ const News = () => {
 
   const { data: tagsData = [], isLoading: tagsLoading } = usePostTags();
 
-  // Ensure tags are properly typed as strings
+  // Fix tag processing - ensure we get clean string tags
   const processedTags = Array.isArray(tagsData) 
-    ? tagsData.slice(0, 10).map((tag: any) => String(tag))
+    ? tagsData.slice(0, 10).filter(tag => typeof tag === 'string' && tag.trim() !== '')
     : [];
   const allTags = ['All', ...processedTags];
+
+  console.log('Raw tags data:', tagsData);
+  console.log('Processed tags:', processedTags);
+  console.log('All tags for filter:', allTags);
 
   const totalPages = postsData ? Math.ceil(postsData.total / postsPerPage) : 1;
 
