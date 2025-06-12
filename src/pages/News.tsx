@@ -4,6 +4,7 @@ import { usePosts, usePostTags } from '../hooks/usePosts';
 import { Post } from '../services/postsApi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import NewsFilter from '../components/NewsFilter';
 
 const News = () => {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
@@ -151,37 +152,12 @@ const News = () => {
             Latest News & Updates
           </h1>
           
-          {/* Tag Filter */}
-          <div className="flex flex-wrap gap-2 mb-8">
-            {tagsLoading ? (
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="h-10 w-20 bg-muted rounded-lg animate-pulse" />
-                ))}
-              </div>
-            ) : (
-              allTags.map((tag) => (
-                <Button
-                  key={tag}
-                  onClick={() => handleTagChange(tag)}
-                  variant={selectedTag === tag ? "default" : "outline"}
-                  size="sm"
-                  className="capitalize"
-                >
-                  {tag}
-                </Button>
-              ))
-            )}
-          </div>
-          
-          {/* Show current filter */}
-          {selectedTag !== 'All' && (
-            <div className="mb-4">
-              <p className="text-sm text-muted-foreground">
-                Showing posts tagged with: <span className="font-medium text-primary">{selectedTag}</span>
-              </p>
-            </div>
-          )}
+          <NewsFilter
+            tags={allTags}
+            selectedTag={selectedTag}
+            onTagChange={handleTagChange}
+            isLoading={tagsLoading}
+          />
         </div>
 
         {/* Posts Grid */}
