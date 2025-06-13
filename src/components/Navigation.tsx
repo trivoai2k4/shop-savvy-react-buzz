@@ -1,15 +1,18 @@
 
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag, Menu, X } from 'lucide-react';
+import { ShoppingBag, Menu, X, User, LogOut } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../hooks/redux';
+import { useAuth } from '../contexts/AuthContext';
 import { toggleCart } from '../store/cartSlice';
+import { Button } from '@/components/ui/button';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector(state => state.cart.items);
+  const { isAuthenticated, user, logout } = useAuth();
   
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -19,6 +22,11 @@ const Navigation = () => {
     { name: 'News', path: '/news' },
     { name: 'Contact', path: '/contact' },
   ];
+
+  // Add dashboard link for authenticated users
+  if (isAuthenticated) {
+    navLinks.push({ name: 'Dashboard', path: '/dashboard' });
+  }
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -60,6 +68,32 @@ const Navigation = () => {
                 </span>
               )}
             </button>
+
+            {/* Authentication buttons */}
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-3">
+                <span className="text-sm text-gray-600">
+                  <User size={16} className="inline mr-1" />
+                  {user?.name || user?.email}
+                </span>
+                <Button
+                  onClick={logout}
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 border-red-600 hover:bg-red-50"
+                >
+                  <LogOut size={16} className="mr-1" />
+                  Logout
+                </Button>
+              </div>
+            ) : (
+              <Link to="/login">
+                <Button variant="outline" size="sm">
+                  <User size={16} className="mr-1" />
+                  Login
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -101,6 +135,40 @@ const Navigation = () => {
                 {link.name}
               </Link>
             ))}
+            
+            {/* Mobile auth section */}
+            <div className="border-t border-gray-200 mt-4 pt-4 px-4">
+              {isAuthenticated ? (
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-600">
+                    Logged in as: {user?.name || user?.email}
+                  </p>
+                  <Button
+                    onClick={() => {
+                      logout();
+                      setIsMenuOpen(false);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-red-600 border-red-600 hover:bg-red-50"
+                  >
+                    <LogOut size={16} className="mr-1" />
+                    Logout
+                  </Button>
+                </div>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="block"
+                >
+                  <Button variant="outline" size="sm" className="w-full">
+                    <User size={16} className="mr-1" />
+                    Login
+                  </Button>
+                </Link>
+              )}
+            </div>
           </div>
         )}
       </div>
