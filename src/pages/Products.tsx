@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Search, Loader2 } from 'lucide-react';
 import { useAppDispatch } from '../hooks/redux';
@@ -21,7 +20,7 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
   const [categories, setCategories] = useState(['All']);
-  const limit = 6;
+  const limit = 8; // Changed from 6 to 8 for better 4-column layout
 
   const { data, isLoading, error } = useProducts({
     page: currentPage,
@@ -193,10 +192,10 @@ const Products = () => {
           </div>
         )}
 
-        {/* Products Grid */}
+        {/* Products Grid - Updated to show 4 columns */}
         {data && data.products.length > 0 && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
               {data.products.map((product) => (
                 <div
                   key={product.id}
