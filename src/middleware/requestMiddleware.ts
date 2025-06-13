@@ -1,7 +1,9 @@
 
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+
 interface RequestConfig {
   url: string;
-  options?: RequestInit;
+  options?: AxiosRequestConfig;
   retries?: number;
   timeout?: number;
 }
@@ -10,13 +12,10 @@ class RequestMiddleware {
   private static defaultTimeout = 10000; // 10 seconds
   private static defaultRetries = 3;
 
-  static async execute({ url, options = {}, retries = this.defaultRetries, timeout = this.defaultTimeout }: RequestConfig): Promise<Response> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-    const requestOptions: RequestInit = {
+  static async execute({ url, options = {}, retries = this.defaultRetries, timeout = this.defaultTimeout }: RequestConfig): Promise<AxiosResponse> {
+    const requestOptions: AxiosRequestConfig = {
       ...options,
-      signal: controller.signal,
+      timeout,
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
@@ -29,13 +28,8 @@ class RequestMiddleware {
       try {
         console.log(`API Request (attempt ${attempt + 1}):`, { url, options: requestOptions });
         
-        const response = await fetch(url, requestOptions);
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
+        const response = await axios.get(url, requestOptions);
+        
         console.log('API Response success:', { url, status: response.status });
         return response;
       } catch (error) {
@@ -51,7 +45,6 @@ class RequestMiddleware {
       }
     }
 
-    clearTimeout(timeoutId);
     throw new Error(`Request failed after ${retries + 1} attempts: ${lastError.message}`);
   }
 }

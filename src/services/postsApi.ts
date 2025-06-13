@@ -38,12 +38,12 @@ export const fetchPosts = async (params: PostsQueryParams = {}): Promise<PostsRe
   }
 
   const response = await RequestMiddleware.execute({ url });
-  return response.json();
+  return response.data;
 };
 
 export const fetchPostTags = async (): Promise<string[]> => {
   const response = await RequestMiddleware.execute({ 
     url: `${BASE_URL}/posts/tags` 
   });
-  return response.json();
+  return response.data;
 };

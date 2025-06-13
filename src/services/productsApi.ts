@@ -82,11 +82,11 @@ export const fetchProducts = async (params: ProductsQueryParams = {}): Promise<{
   try {
     const response = await RequestMiddleware.execute({ 
       url,
-      timeout: 15000,
+      options: { timeout: 15000 },
       retries: 2
     });
     
-    const data: ProductsResponse = await response.json();
+    const data: ProductsResponse = response.data;
     
     // Transform the raw API data to include compatibility fields
     const transformedProducts: Product[] = data.products.map(product => ({
@@ -115,11 +115,11 @@ export const fetchCategories = async (): Promise<string[]> => {
   try {
     const response = await RequestMiddleware.execute({ 
       url: `${API_BASE_URL}/categories`,
-      timeout: 10000,
+      options: { timeout: 10000 },
       retries: 2
     });
     
-    const categories: CategoryResponse[] = await response.json();
+    const categories: CategoryResponse[] = response.data;
     
     // Transform category objects to extract just the names and add 'All' option
     const categoryNames = categories.map(cat => cat.name);
